@@ -1,0 +1,10 @@
+CompileFlags:
+  Remove:
+    - -mmcu=*
+    - -fno-fat-lto-objects
+    - -flto
+  Add:
+    - -x
+    - c++
+    - -target
+    - avrs

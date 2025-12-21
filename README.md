@@ -4,7 +4,7 @@
 
 Create new sketch
 ```bash
-arduino-cli sketch new <sketch_name>
+arduino-cli sketch new <sketch_path>
 ```
 Update core drivers & compilers
 ```bash
@@ -40,5 +40,5 @@ Upload to board
 arduino-cli upload -p <port> \
   --fqbn <fqbn> \
   --build-path <build_dir> \
-  ./sketch
+  <sketch_path>
 ```
