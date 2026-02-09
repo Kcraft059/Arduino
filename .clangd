@@ -3,8 +3,11 @@ CompileFlags:
     - -mmcu=*
     - -fno-fat-lto-objects
     - -flto
-  Add:
-    - -x
-    - c++
-    - -target
-    - avrs
+  Add: 
+    - --target=avr
+    - -mmcu=atmega328p
+    - -I/Users/camille/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/avr/include
+    - -xc++
+#Diagnostics:
+#  Suppress:
+#    - pp_file_not_found
