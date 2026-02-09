@@ -3,7 +3,7 @@
 ## Arduino-cli
 
 > [!NOTE]
-> Arduino-packages-pat: `~/Library/Arduino`
+> Arduino packages path: `~/Library/Arduino`
 
 Create new sketch
 ```bash
