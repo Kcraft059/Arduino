@@ -2,6 +2,9 @@
 
 ## Arduino-cli
 
+> [!INFO]
+> Arduino-packages-pat: `~/Library/Arduino`
+
 Create new sketch
 ```bash
 arduino-cli sketch new <sketch_path>
