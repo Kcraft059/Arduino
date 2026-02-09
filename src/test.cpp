@@ -2,7 +2,7 @@
 
 void myCycle() {
   digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
+  delay(CYCLE_TIME);
   digitalWrite(LED_BUILTIN, LOW);
-  delay(500);
+  delay(CYCLE_TIME);
 };
