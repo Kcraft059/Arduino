@@ -2,7 +2,7 @@
 
 ## Arduino-cli
 
-> [!INFO]
+> [!NOTE]
 > Arduino-packages-pat: `~/Library/Arduino`
 
 Create new sketch
