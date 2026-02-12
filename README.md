@@ -34,14 +34,28 @@ arduino-cli compile \
   --build-path <build_dir> \
   ./sketch
 ```
-Find port to of board (eg: `/dev/cu.usbserial-A700e5Q6`)
+Find serial device to board (eg: `/dev/cu.usbserial-A700e5Q6`)
 ```bash
 arduino-cli board list
 ```
 Upload to board
 ```bash
-arduino-cli upload -p <port> \
+arduino-cli upload -p <sdev> \
   --fqbn <fqbn> \
   --build-path <build_dir> \
   <sketch_path>
+```
+
+## Serial console
+
+Open in raw mode with screen
+```bash
+screen <sdev> <baud>
+```
+
+Or with cat, line buffered
+```bash
+stty -F <sdev> <baud>
+cat <sdev> &
+echo <mycommand> > <sdev>
 ```

@@ -9,31 +9,24 @@ void setup() {
 }
 
 void loop() {
-  char inchr = Serial.read();
+  while (Serial.available()) { // To read continous string at once
+    char inchr;
 
-  if (inchr != -1) {
-    inputstr.cnt = 0;
-    while (inputstr.cnt < inputstr.max - 1) {
-      if (inchr != -1) {
-        if (inchr == '\n' || inchr == '\r')
-          break;
-        else
-          inputstr.str[inputstr.cnt] = inchr;
+    if ((inputstr.cnt >= inputstr.max - 1) ||                                // End parsing when reaching end of string
+        (inchr = Serial.read()) == '\n' || inchr == '\r' || inchr == '\0') { // Or a carriage return
+      inputstr.str[inputstr.cnt] = '\0';
+      cmdParse(inputstr.str);
+      inputstr.cnt = 0;
 
-        inputstr.cnt++;
-      }
-      inchr = Serial.read();
-    }
-
-    inputstr.str[inputstr.cnt] = '\0';
-
-    Serial.println("Got: " + String(inputstr.str));
-
-    if (strcmp(inputstr.str, "light") == 0)
-      digitalWrite(LED_BUILTIN, HIGH);
-    if (strcmp(inputstr.str, "dark") == 0)
-      digitalWrite(LED_BUILTIN, LOW);
+    } else
+      inputstr.str[inputstr.cnt++] = inchr;
   }
+}
 
-  delay(500);
+void cmdParse(char* cmd) {
+  Serial.println("Got: \"" + String(cmd) + "\"");
+  if (strcmp(cmd, "light") == 0)
+    digitalWrite(LED_BUILTIN, HIGH);
+  else if (strcmp(cmd, "dark") == 0)
+    digitalWrite(LED_BUILTIN, LOW);
 }

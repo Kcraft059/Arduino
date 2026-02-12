@@ -3,7 +3,7 @@ SRC_DIR := ./src
 INO_NAME := $(notdir $(patsubst %/,%,$(SRC_DIR)))
 
 MODEL := arduino:avr:pro
-PORT := /dev/cu.usbserial-A700e5Q6
+SDEV := /dev/cu.usbserial-A700e5Q6
 
 .PHONY: build upload clean
 
@@ -20,11 +20,11 @@ build:
 	@echo "-> Built $(SRC_DIR) to $(BUILD_DIR) for $(MODEL)"
 
 upload:
-	arduino-cli upload -p $(PORT) \
+	arduino-cli upload -p $(SDEV) \
 		--fqbn $(MODEL) \
 		--build-path $(BUILD_DIR) \
 		$(SRC_DIR)
-	@echo "-> Uploaded $(BUILD_DIR) for $(MODEL) to $(PORT)"
+	@echo "-> Uploaded $(BUILD_DIR) for $(MODEL) to $(SDEV)"
 
 clean:
 	rm -rf $(BUILD_DIR) ./compile_commands.json 
