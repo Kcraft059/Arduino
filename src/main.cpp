@@ -1,5 +1,4 @@
 #include "include/main.h"
-#include "HardwareSerial.h"
 
 struct srlstr inputstr;
 
