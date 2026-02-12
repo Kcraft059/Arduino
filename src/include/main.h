@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#define SERIAL_BUFFER 8
+#define SERIAL_BUFFER 256
 
 struct srlstr {
   char str[SERIAL_BUFFER];
