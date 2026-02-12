@@ -9,11 +9,11 @@ void setup() {
 }
 
 void loop() {
-  while (Serial.available()) { // To read continous string at once
+  while (Serial.available()) { // To read continous string at once if contiguous
     char inchr;
 
-    if ((inputstr.cnt >= inputstr.max - 1) ||                                // End parsing when reaching end of string
-        (inchr = Serial.read()) == '\n' || inchr == '\r' || inchr == '\0') { // Or a carriage return
+    if ((inputstr.cnt >= inputstr.max - 1) ||                                // End when reaching end of string
+        (inchr = Serial.read()) == '\n' || inchr == '\r' || inchr == '\0') { // If not at the end, parse and check for a carriage return
       inputstr.str[inputstr.cnt] = '\0';
       cmdParse(inputstr.str);
       inputstr.cnt = 0;

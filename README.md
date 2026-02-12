@@ -3,7 +3,7 @@
 ## Arduino-cli
 
 > [!NOTE]
-> Arduino packages path: `~/Library/Arduino*`
+> Default arduino packages path: `~/Library/Arduino*` redirected to `./arduino-data`
 
 Create new sketch
 ```bash
