@@ -26,7 +26,8 @@
         ];
 
         shellHook = ''
-          # Arduino-packages-path -> ~/Library/Arduino*
+          export ARDUINO_DIRECTORIES_DATA=$PWD/arduino-data # Arduino-packages-path -> ~/Library/Arduino*
+
           cat > .zsh-shell <<'EOF'
           TRAPEXIT() {
             rm -rf .zsh-shell

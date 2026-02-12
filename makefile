@@ -15,6 +15,7 @@ build:
   	--fqbn $(MODEL) \
   	--build-path $(BUILD_DIR) \
 		$(SRC_DIR)
+	@ln -sf $(BUILD_DIR)/compile_commands.json 
 	@rm -rf $(SRC_DIR)/$(INO_NAME).ino
 	@echo "-> Built $(SRC_DIR) to $(BUILD_DIR) for $(MODEL)"
 
@@ -26,4 +27,4 @@ upload:
 	@echo "-> Uploaded $(BUILD_DIR) for $(MODEL) to $(PORT)"
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) ./compile_commands.json 
