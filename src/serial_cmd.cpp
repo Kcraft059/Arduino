@@ -58,17 +58,11 @@ char** cmdTokenize(char* str, char* separator) {
   Serial.print("[tok]: \"");
 #endif
 
-  // Copy original string
-  const size_t cmdlen = sizeof(char*) * (strlen(str) + 1);
-  char* strBuffer = (char*)malloc(cmdlen);
-  if (!memcpy(strBuffer, str, cmdlen))
-    return NULL;
-
   int arglen = 1;
   char** args = (char**)malloc(arglen * sizeof(char*)); // Allocs an argument array
 
   // Tokenize str
-  char* token = strtok(strBuffer, separator);
+  char* token = strtok(str, separator);
 
   while (token != NULL) {
     char** currentArg = args + arglen - 1;
@@ -93,8 +87,6 @@ char** cmdTokenize(char* str, char* separator) {
 #endif
 
   args[arglen - 1] = NULL;
-
-  free(strBuffer);
   return args;
 }
 
