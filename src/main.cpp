@@ -1,32 +1,62 @@
 #include "include/main.h"
 
-struct srlstr inputstr;
-
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(digitPin.a, OUTPUT);
+  pinMode(digitPin.b, OUTPUT);
+  pinMode(digitPin.c, OUTPUT);
+  pinMode(digitPin.d, OUTPUT);
+  pinMode(digitPin.e, OUTPUT);
+  pinMode(digitPin.f, OUTPUT);
+  pinMode(digitPin.g, OUTPUT);
+  pinMode(digitPin.DP, OUTPUT);
+  pinMode(digitPin.BR, OUTPUT);
   Serial.begin(9600);
-  Serial.println("Init");
+
+#ifdef DEBUG
+  Serial.println("[init]");
+#endif
 }
+
+int numCmd(char** args) {
+  char* endptr;
+  int num = strtod(args[1], &endptr);
+
+  if (args[1] == endptr)
+    return 1;
+
+  digShow(digitEnc[num], &digitPin);
+  return 0;
+}
+
+int brCmd(char** args) {
+  char* endptr;
+  int num = strtod(args[1], &endptr);
+
+  if (args[1] == endptr)
+    return 1;
+
+  analogWrite(digitPin.BR, num);
+  return 0;
+}
+
+int rawSegCmd(char** args) {
+  char* endptr;
+  int num = strtod(args[1], &endptr);
+
+  if (args[1] == endptr)
+    return 1;
+
+  digShow(num, &digitPin);
+  return 0;
+}
+
+struct persistentStr inputstr;
+struct serialCmd cmdList[] = {
+    {"num", numCmd},
+    {"br", brCmd},
+    {"raw", rawSegCmd},
+    {NULL}};
 
 void loop() {
-  while (Serial.available()) { // To read continous string at once if contiguous
-    char inchr;
-
-    if ((inputstr.cnt >= inputstr.max - 1) ||                                // End when reaching end of string
-        (inchr = Serial.read()) == '\n' || inchr == '\r' || inchr == '\0') { // If not at the end, parse and check for a carriage return
-      inputstr.str[inputstr.cnt] = '\0';
-      cmdParse(inputstr.str);
-      inputstr.cnt = 0;
-
-    } else
-      inputstr.str[inputstr.cnt++] = inchr;
-  }
-}
-
-void cmdParse(char* cmd) {
-  Serial.println("Got: \"" + String(cmd) + "\"");
-  if (strcmp(cmd, "light") == 0)
-    digitalWrite(LED_BUILTIN, HIGH);
-  else if (strcmp(cmd, "dark") == 0)
-    digitalWrite(LED_BUILTIN, LOW);
+  serialParse(&inputstr, cmdList); // Interprets serial commands
 }
