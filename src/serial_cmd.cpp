@@ -1,8 +1,5 @@
-#include "include/main.h"
+#include <serial_cmd.h>
 
-/// Serial command defs
-
-/// Top level eval and parsing
 // Serial parsing
 void serialParse(struct persistentStr* pStr, struct serialCmd* cmdList) {
 
@@ -27,18 +24,18 @@ void serialParse(struct persistentStr* pStr, struct serialCmd* cmdList) {
   }
 };
 
+// Command evaluation
 void cmdEval(char* cmdStr, struct serialCmd* cmdList) {
-  char** args = cmdTokenize(cmdStr, " ");
+  char** args = cmdTokenize(cmdStr, " "); // Split cmdStr by spaces
 
 #ifdef DEBUG
   Serial.println("[key]: \"" + String(args[0]) + "\"");
 #endif
 
   int cmdReturn = -1;
-  for (int i = 0; cmdList[i].keyword != NULL; i++) {
-    if (strcmp(args[0], cmdList[i].keyword) == 0)
-      cmdReturn = cmdList[i].func(args);
-  }
+  for (int i = 0; cmdList[i].keyword != NULL; i++)
+    if (strcmp(args[0], cmdList[i].keyword) == 0) // Verify if command exists
+      cmdReturn = cmdList[i].func(args);          // Execute associated command
 
 #ifdef DEBUG
   Serial.println("[cmd status]: " + String(cmdReturn));
@@ -47,6 +44,7 @@ void cmdEval(char* cmdStr, struct serialCmd* cmdList) {
   argsFree(args); // Free command args
 }
 
+// Tokenize commands into args 2d list
 char** cmdTokenize(char* str, char* separator) {
 #ifdef DEBUG
   Serial.print("[tok]: \"");
@@ -92,6 +90,7 @@ char** cmdTokenize(char* str, char* separator) {
   return args;
 }
 
+// Free arg list
 void argsFree(char** args) {
   for (int i = 0; args[i] != NULL; i++)
     free(args[i]);

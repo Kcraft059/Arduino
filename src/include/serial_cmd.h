@@ -1,6 +1,8 @@
 #ifndef SERIAL_CMD_H
 #define SERIAL_CMD_H
 
+#include <Arduino.h>
+
 #define SERIAL_BUFFER 256
 
 struct persistentStr {

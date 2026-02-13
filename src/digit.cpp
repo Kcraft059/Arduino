@@ -1,4 +1,4 @@
-#include "include/main.h"
+#include <digit.h>
 
 int8_t digitEnc[] = {
     0b00111111, // 0 // Encode number in bin as DP,G,F,E,D,C,B,A

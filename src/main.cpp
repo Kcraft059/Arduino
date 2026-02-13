@@ -1,5 +1,4 @@
-#include "include/main.h"
-#include "Arduino.h"
+#include <main.h>
 
 void setup() {
   pinMode(digitPin.a, OUTPUT);
@@ -14,7 +13,7 @@ void setup() {
   Serial.begin(9600);
 
 #ifdef DEBUG
-  Serial.println("[init]");
+  Serial.println("[init]: debug mode");
 #endif
 }
 
