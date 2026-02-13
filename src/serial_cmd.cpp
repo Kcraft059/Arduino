@@ -2,25 +2,34 @@
 
 // Serial parsing
 void serialParse(struct persistentStr* pStr, struct serialCmd* cmdList) {
-
 #ifdef CMD_NO_BLOCK
   if (Serial.available()) { // To read one letter at a time
 #else
   while (Serial.available()) { // To read continous string at once if contiguous
 #endif
 
+    if (pStr->str == NULL)
+      pStr->str = (char*)malloc(++(pStr->size) * sizeof(char));
+    else
+      pStr->str = (char*)realloc(pStr->str, ++(pStr->size) * sizeof(char));
+
     char chr;
 
-    if ((pStr->cnt >= pStr->max - 1) ||                                // End when reaching end of string
-        (chr = Serial.read()) == '\n' || chr == '\r' || chr == '\0') { // If not at the end, parse and check for a carriage return
+    if (pStr->size >= 256) {
+      goto reset_str;
 
-      pStr->str[pStr->cnt] = '\0';
-      pStr->cnt = 0;
+    } else if ((chr = Serial.read()) == '\n' || chr == '\r' || chr == '\0') { // If not at the end, parse and check for a carriage return
+      pStr->str[pStr->size - 1] = '\0';
 
       cmdEval(pStr->str, cmdList);
 
+    reset_str:
+      free(pStr->str);
+      pStr->size = 0;
+      pStr->str = NULL;
+
     } else
-      pStr->str[pStr->cnt++] = chr;
+      pStr->str[pStr->size - 1] = chr;
   }
 };
 

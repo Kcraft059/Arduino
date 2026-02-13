@@ -1,5 +1,3 @@
-#include "HardwareSerial.h"
-#include "WString.h"
 #include <main.h>
 
 void setup() {
