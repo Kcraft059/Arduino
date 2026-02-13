@@ -1,5 +1,6 @@
 build
-.zsh-shell
 arduino-data
-.cache
 src-test
+.*
+
+sss

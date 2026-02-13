@@ -1,4 +1,3 @@
-#include "WString.h"
 #include "include/main.h"
 
 /// Serial command defs

@@ -1,4 +1,5 @@
 #include "include/main.h"
+#include "Arduino.h"
 
 void setup() {
   pinMode(digitPin.a, OUTPUT);
@@ -50,13 +51,37 @@ int rawSegCmd(char** args) {
   return 0;
 }
 
+unsigned long timeDelay = 50;
+
+int timeCmd(char** args) {
+  char* endptr;
+  unsigned long num = strtod(args[1], &endptr);
+
+  if (args[1] == endptr)
+    return 1;
+
+  timeDelay = num;
+  return 0;
+}
+
 struct persistentStr inputstr;
 struct serialCmd cmdList[] = {
     {"num", numCmd},
     {"br", brCmd},
     {"raw", rawSegCmd},
+    {"tm", timeCmd},
     {NULL}};
+
+int8_t count = 0;
+unsigned long timemark = 0;
 
 void loop() {
   serialParse(&inputstr, cmdList); // Interprets serial commands
+
+  if (millis() >= timemark) {
+    timemark = millis() + timeDelay;
+
+    digShow(count, &digitPin);
+    count++;
+  }
 }
