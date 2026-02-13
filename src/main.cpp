@@ -1,3 +1,5 @@
+#include "HardwareSerial.h"
+#include "WString.h"
 #include <main.h>
 
 void setup() {
@@ -16,6 +18,11 @@ void setup() {
   Serial.println("[init]: debug mode");
 #endif
 }
+
+unsigned long timeMark = 0;
+unsigned long timeDelay = 50;
+bool counter = false;
+int8_t count = 0;
 
 int numCmd(char** args) {
   char* endptr;
@@ -50,16 +57,36 @@ int rawSegCmd(char** args) {
   return 0;
 }
 
-unsigned long timeDelay = 50;
-
 int timeCmd(char** args) {
-  char* endptr;
-  unsigned long num = strtod(args[1], &endptr);
 
-  if (args[1] == endptr)
+  if (strcmp(args[1], "dl") == 0) {
+    char* endptr;
+    unsigned long num = strtod(args[2], &endptr);
+
+    if (args[2] == endptr)
+      return 1;
+
+    timeDelay = num;
+    timeMark = millis();
+
+  } else if (strcmp(args[1], "st") == 0) {
+
+    switch (args[2][0]) {
+    case 't':
+      counter ^= 1;
+      break;
+    case '1':
+      counter = 1;
+      break;
+    case '0':
+      counter = 0;
+      break;
+    default:
+      return 1;
+    }
+  } else {
     return 1;
-
-  timeDelay = num;
+  }
   return 0;
 }
 
@@ -71,14 +98,11 @@ struct serialCmd cmdList[] = {
     {"tm", timeCmd},
     {NULL}};
 
-int8_t count = 0;
-unsigned long timemark = 0;
-
 void loop() {
   serialParse(&inputstr, cmdList); // Interprets serial commands
 
-  if (millis() >= timemark) {
-    timemark = millis() + timeDelay;
+  if ((millis() >= timeMark) && counter) {
+    timeMark = millis() + timeDelay;
 
     digShow(count, &digitPin);
     count++;

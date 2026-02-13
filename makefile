@@ -3,7 +3,7 @@ SRC_DIR 	  := ./src
 INCLUDE_DIR := $(SRC_DIR)/include/
 INO_NAME 	  := $(notdir $(patsubst %/,%,$(SRC_DIR)))
 
-FLAGS := -Wall -I$(INCLUDE_DIR)
+FLAGS := $(EXTRA_FLAGS) -Wall -I$(INCLUDE_DIR)
 MODEL := arduino:avr:pro
 SDEV 	:= /dev/cu.usbserial-A700e5Q6
 
@@ -16,7 +16,7 @@ build:
 	arduino-cli compile \
   	--fqbn $(MODEL) \
   	--build-path $(BUILD_DIR) \
-		$(foreach elem, $(FLAGS),--build-property build.extra_flags=\"$(subst __, ,$(elem))\") \
+		--build-property "build.extra_flags=$(foreach elem, $(FLAGS),\"$(subst __, ,$(elem))\")" \
 		$(SRC_DIR)
 	@ln -sf $(BUILD_DIR)/compile_commands.json 
 	@rm -rf $(SRC_DIR)/$(INO_NAME).ino
