@@ -15,12 +15,11 @@ void serialParse(struct persistentStr* pStr, struct serialCmd* cmdList) {
 
     char chr;
 
-    if (pStr->size >= 256) {
+    if (pStr->size >= 256)
       goto reset_str;
 
-    } else if ((chr = Serial.read()) == '\n' || chr == '\r' || chr == '\0') { // If not at the end, parse and check for a carriage return
+    else if ((chr = Serial.read()) == '\n' || chr == '\r' || chr == '\0') { // If not at the end, parse and check for a carriage return
       pStr->str[pStr->size - 1] = '\0';
-
       cmdEval(pStr->str, cmdList);
 
     reset_str:
