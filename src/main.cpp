@@ -1,22 +1,5 @@
 #include <main.h>
 
-void setup() {
-  pinMode(digitPin.a, OUTPUT);
-  pinMode(digitPin.b, OUTPUT);
-  pinMode(digitPin.c, OUTPUT);
-  pinMode(digitPin.d, OUTPUT);
-  pinMode(digitPin.e, OUTPUT);
-  pinMode(digitPin.f, OUTPUT);
-  pinMode(digitPin.g, OUTPUT);
-  pinMode(digitPin.DP, OUTPUT);
-  pinMode(digitPin.BR, OUTPUT);
-  Serial.begin(9600);
-
-#ifdef DEBUG
-  Serial.println("[init]: debug mode");
-#endif
-}
-
 unsigned long timeMark = 0;
 unsigned long timeDelay = 50;
 bool counter = false;
@@ -88,16 +71,39 @@ int timeCmd(char** args) {
   return 0;
 }
 
-struct persistentStr inputstr;
-struct serialCmd cmdList[] = {
-    {"num", numCmd},
-    {"br", brCmd},
-    {"raw", rawSegCmd},
-    {"tm", timeCmd},
-    {NULL}};
+SerialInterpreter* srl_inter;
+
+void setup() {
+  pinMode(digitPin.a, OUTPUT);
+  pinMode(digitPin.b, OUTPUT);
+  pinMode(digitPin.c, OUTPUT);
+  pinMode(digitPin.d, OUTPUT);
+  pinMode(digitPin.e, OUTPUT);
+  pinMode(digitPin.f, OUTPUT);
+  pinMode(digitPin.g, OUTPUT);
+  pinMode(digitPin.DP, OUTPUT);
+  pinMode(digitPin.BR, OUTPUT);
+  Serial.begin(9600);
+
+#ifdef DEBUG
+  Serial.println("[init]: debug mode");
+#endif
+
+  serialCmd cmds[] = {{"num", numCmd},
+                      {"br", brCmd},
+                      {"raw", rawSegCmd},
+                      {"tm", timeCmd},
+                      {NULL, NULL}};
+
+  srl_inter = new SerialInterpreter(cmds);
+}
 
 void loop() {
-  serialParse(&inputstr, cmdList); // Interprets serial commands
+  char* srl_cmd;
+  if (srl_cmd = srl_inter->parse("\n\r")) {
+    uint8_t status = srl_inter->eval(srl_cmd);
+    free(srl_cmd);
+  }
 
   if ((millis() >= timeMark) && counter) {
     timeMark = millis() + timeDelay;

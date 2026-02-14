@@ -1,6 +1,6 @@
 #include <digit.h>
 
-int8_t digitEnc[] = {
+uint8_t digitEnc[] = {
     0b00111111, // 0 // Encode number in bin as DP,G,F,E,D,C,B,A
     0b00000110, // 1
     0b01011011, // 2
@@ -24,7 +24,7 @@ struct digitPinout digitPin = {
     .DP = 13,
     .BR = 3};
 
-void digShow(int digit, struct digitPinout* digp) {
+void digShow(uint8_t digit, struct digitPinout* digp) {
   digitalWrite(digp->a, digit & 1 << 0);
   digitalWrite(digp->b, digit & 1 << 1);
   digitalWrite(digp->c, digit & 1 << 2);
