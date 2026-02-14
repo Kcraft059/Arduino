@@ -21,12 +21,23 @@ SerialInterpreter::~SerialInterpreter() {
     free(this->persist_str.str);
 }
 
+void SerialInterpreter::listen() {
+  char* srl_cmd = this->parse(";\n\r");
+  
+  if (srl_cmd) {
+    uint8_t status = this->eval(srl_cmd, " ");
+    free(srl_cmd);
+  }
+}
+
 char* SerialInterpreter::parse(char* delims) {
   char* parsed_str = NULL;
 
   while (Serial.available()) { // To read continous string at once if contiguous
-    if (++(this->persist_str.size) > this->max_cmd_length)
-      goto reset_str;
+    if (++(this->persist_str.size) > this->max_cmd_length) {
+      this->persistFree();
+      return parsed_str;
+    }
 
     if (!this->persist_str.str)
       this->persist_str.str = (char*)malloc(this->persist_str.size * sizeof(char));
@@ -44,30 +55,25 @@ char* SerialInterpreter::parse(char* delims) {
 
     if (is_delim) {
       this->persist_str.str[this->persist_str.size - 1] = '\0';
+
       parsed_str = strdup(this->persist_str.str);
+      this->persistFree();
 
 #ifdef DEBUG
       Serial.println("[cmd]: \"" + String(parsed_str) + "\"");
 #endif
 
-      goto reset_str;
+      return parsed_str;
 
     } else
       this->persist_str.str[this->persist_str.size - 1] = chr;
   }
 
-  goto return_parsed;
-
-reset_str:
-  free(this->persist_str.str);
-  this->persist_str.str = NULL;
-  this->persist_str.size = 0;
-return_parsed:
   return parsed_str;
 };
 
-uint8_t SerialInterpreter::eval(char* cmd_str) {
-  char** args = this->tokenize(cmd_str, " ");
+uint8_t SerialInterpreter::eval(char* cmd_str, char* delims) {
+  char** args = this->tokenizeArgs(cmd_str, delims);
 
 #ifdef DEBUG
   Serial.println("[cmd][key]: \"" + String(args[0]) + "\"");
@@ -78,7 +84,7 @@ uint8_t SerialInterpreter::eval(char* cmd_str) {
     if (strcmp(args[0], this->cmd_list[i].keyword) == 0) // Verify if command exists
       cmd_status = this->cmd_list[i].func(args);         // Execute associated command
 
-  argsFree(args); // Free command args
+  freeArgs(args); // Free command args
 
 #ifdef DEBUG
   Serial.println("[cmd][sts]: " + String(cmd_status));
@@ -87,7 +93,7 @@ uint8_t SerialInterpreter::eval(char* cmd_str) {
   return cmd_status;
 };
 
-char** SerialInterpreter::tokenize(char* cmd_str, char* delims) {
+char** SerialInterpreter::tokenizeArgs(char* cmd_str, char* delims) {
 #ifdef DEBUG
   Serial.print("[cmd][tok]: ");
 #endif
@@ -119,8 +125,14 @@ char** SerialInterpreter::tokenize(char* cmd_str, char* delims) {
   return args;
 };
 
-void SerialInterpreter::argsFree(char** args) {
+void SerialInterpreter::freeArgs(char** args) {
   for (int i = 0; args[i] != NULL; i++)
     free(args[i]);
   free(args);
 };
+
+void SerialInterpreter::persistFree() {
+  free(this->persist_str.str);
+  this->persist_str.str = NULL;
+  this->persist_str.size = 0;
+}

@@ -10,7 +10,7 @@ typedef struct {
 
 typedef struct {
   char* keyword;
-  int (*func)(char**);
+  uint8_t (*func)(char**);
 } serialCmd;
 
 class SerialInterpreter {
@@ -25,11 +25,14 @@ public:
   SerialInterpreter(serialCmd*);
   ~SerialInterpreter();
 
-  char* parse(char*); // Parses command from Serial input
-  uint8_t eval(char*);
+  void listen();              // Listen to serial port for commands
+  char* parse(char*);         // Parses string from Serial input
+  uint8_t eval(char*, char*); // Eval a string
 
-  static char** tokenize(char*, char*);
-  static void argsFree(char**);
+private:
+  void persistFree();
+  static char** tokenizeArgs(char*, char*);
+  static void freeArgs(char**);
 };
 
 #endif

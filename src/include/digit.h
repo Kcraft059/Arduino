@@ -3,7 +3,15 @@
 
 #include <Arduino.h>
 
-struct digitPinout {
+// Sized Array
+template <typename AT, typename ST>
+struct sizedArray {
+  AT* array;
+  ST size;
+};
+
+// Struct Schemes
+struct digit_pinout {
   uint8_t a;
   uint8_t b;
   uint8_t c;
@@ -15,10 +23,34 @@ struct digitPinout {
   uint8_t BR;
 };
 
-extern struct digitPinout digitPin;
-extern uint8_t digitEnc[];
+typedef struct {
+  char chr;
+  uint8_t encoding;
+} char_7seg;
 
-// Helpers
-void digShow(uint8_t digit, struct digitPinout* digp);
+// Digit class
+class Digit {
+public:
+  struct digit_pinout pinout = {.a = 6,
+                                .b = 7,
+                                .c = 12,
+                                .d = 11,
+                                .e = 10,
+                                .f = 8,
+                                .g = 9,
+                                .DP = 13,
+                                .BR = 3};
+
+private:
+  sizedArray<char_7seg, uint8_t> encoding;
+
+public:
+  Digit();
+  ~Digit();
+
+  bool showChar(char);
+  void showRaw(uint8_t);
+  void setBrightness(uint8_t val);
+};
 
 #endif
