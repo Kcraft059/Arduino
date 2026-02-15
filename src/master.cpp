@@ -1,5 +1,8 @@
 #include <master.h>
 
+SerialInterpreter* srl_inter;
+HTlcd* lcd;
+
 uint8_t sendMsgCmd(char** args) {
   char* endptr;
   byte value = strtod(args[1], &endptr);
@@ -25,8 +28,40 @@ uint8_t sendMsgCmd(char** args) {
   return Wire.endTransmission();
 };
 
-SerialInterpreter* srl_inter;
-HTlcd* lcd;
+uint8_t scrollCmd(char** args) {
+  if (strcmp(args[0], "ascr") == 0) {
+    struct scrollText text;
+    if (args[1]) text.str = args[1];
+    else return 1;
+    if (args[2]) text.dir = (args[2][0] == 'r') ? scrollText::RIGHT : scrollText::LEFT;
+    else return 1;
+    if (args[3]) text.dly = strtod(args[3], NULL);
+    else return 1;
+    if (args[4]) text.pos.line = strtod(args[4], NULL);
+    else return 1;
+    if (args[5]) text.pos.column = strtod(args[5], NULL);
+    else return 1;
+    if (args[6]) text.len = strtod(args[6], NULL);
+    else return 1;
+
+    char strbuffer[32];
+    sprintf(strbuffer, "[lcd]: %p", lcd->addScrollText(text));
+
+    Serial.println(strbuffer);
+    return 0;
+  } else {
+    uint8_t* handle;
+    if (args[1]) handle = (uint8_t*)strtoul(args[1], NULL, 0);
+    else return 1;
+
+    char strbuffer[32];
+    sprintf(strbuffer, "[lcd]: %p", handle);
+
+    Serial.println(strbuffer);
+
+    return lcd->delScrollText(*handle);
+  }
+};
 
 void setup() {
   // Begin I2C connection
@@ -35,19 +70,15 @@ void setup() {
   // Init a serial connection and interpreter
   Serial.begin(9600);
   serialCmd cmds[] = {{"i2c", sendMsgCmd},
+                      {"ascr", scrollCmd},
+                      {"rscr", scrollCmd},
                       {NULL, NULL}};
   srl_inter = new SerialInterpreter(cmds);
 
-  /* lcd = new HTlcd({2, 16});
-  lcd->setBrightness(200);
+  lcd = new HTlcd({2, 16});
 
-  struct scrollText miamTxt;
-  miamTxt.str = "Miam           ";
-  miamTxt.delay = 500;
-  miamTxt.pos = {1, 1};
-  miamTxt.direction = scrollText::LEFT;
-
-  Serial.print("handle" + String(*lcd->addScrollText(miamTxt))); */
+  lcd->setBrightness(100);
+  lcd->clearAll();
 
 #ifdef DEBUG
   Serial.println("[init]: Compiled for debug mode");
