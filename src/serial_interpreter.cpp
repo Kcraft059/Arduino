@@ -114,7 +114,7 @@ char** SerialInterpreter::tokenizeArgs(char* cmd_str, char* delims) {
 
     // Expend args
     args = (char**)realloc(args, ++arglen * sizeof(char*));
-    token = strtok(NULL, " "); // Get to next token
+    token = strtok(NULL, delims); // Get to next token
   }
 
 #ifdef DEBUG
