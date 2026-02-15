@@ -3,9 +3,12 @@
 
 #include <Arduino.h>
 
+#define PARSE_ALLOC_INCREMENT 8
+
 typedef struct {
   char* str;
-  int size;
+  uint8_t count;
+  uint8_t size;
 } sizedStr;
 
 typedef struct {

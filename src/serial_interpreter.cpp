@@ -9,6 +9,7 @@ SerialInterpreter::SerialInterpreter(serialCmd* cmd_list) {
   memcpy(this->cmd_list, cmd_list, cmd_ls_size * sizeof(serialCmd));
 
   this->persist_str.str = NULL;
+  this->persist_str.count = 0;
   this->persist_str.size = 0;
 };
 
@@ -39,27 +40,26 @@ char* SerialInterpreter::parse(char* delims) {
   char* parsed_str = NULL;
 
   while (Serial.available()) { // To read continous string at once if contiguous
-    if (++(this->persist_str.size) > this->max_cmd_length) {
+    if (++(this->persist_str.count) > this->max_cmd_length) {
       this->persistFree();
       return parsed_str;
     }
 
     if (!this->persist_str.str)
-      this->persist_str.str = (char*)malloc(this->persist_str.size * sizeof(char));
-    else
-      this->persist_str.str = (char*)realloc(this->persist_str.str, this->persist_str.size * sizeof(char));
+      this->persist_str.str = (char*)malloc((this->persist_str.size += PARSE_ALLOC_INCREMENT) * sizeof(char));
+    else if (this->persist_str.size < this->persist_str.count)
+      this->persist_str.str = (char*)realloc(this->persist_str.str,
+                                             (this->persist_str.size += PARSE_ALLOC_INCREMENT) * sizeof(char));
 
     char chr = Serial.read();
     bool is_delim = false;
 
-    for (uint8_t i = 0; delims[i] != '\0'; i++)
-      if (chr == delims[i]) {
+    for (uint8_t i = 0; delims[i] != '\0' && !is_delim; i++)
+      if (chr == delims[i])
         is_delim = true;
-        break;
-      };
 
     if (is_delim) {
-      this->persist_str.str[this->persist_str.size - 1] = '\0';
+      this->persist_str.str[this->persist_str.count - 1] = '\0';
 
       parsed_str = strdup(this->persist_str.str);
       this->persistFree();
@@ -71,7 +71,7 @@ char* SerialInterpreter::parse(char* delims) {
       return parsed_str;
 
     } else
-      this->persist_str.str[this->persist_str.size - 1] = chr;
+      this->persist_str.str[this->persist_str.count - 1] = chr;
   }
 
   return parsed_str;
@@ -220,5 +220,6 @@ void SerialInterpreter::freeArgs(char** args) {
 void SerialInterpreter::persistFree() {
   free(this->persist_str.str);
   this->persist_str.str = NULL;
+  this->persist_str.count = 0;
   this->persist_str.size = 0;
 }
