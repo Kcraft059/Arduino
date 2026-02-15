@@ -14,7 +14,7 @@ SerialInterpreter::SerialInterpreter(serialCmd* cmd_list) {
 
 SerialInterpreter::~SerialInterpreter() {
   for (uint8_t i = 0; this->cmd_list[i].keyword != NULL; i++)
-    free(cmd_list[i].keyword);
+    free(this->cmd_list[i].keyword);
   free(this->cmd_list);
 
   if (this->persist_str.str)
@@ -84,7 +84,7 @@ uint8_t SerialInterpreter::eval(char* cmd_str, struct delimiters* delims) {
   Serial.println("[cmd][key]: \"" + String(args[0]) + "\"");
 #endif
 
-  uint8_t cmd_status = -1;
+  uint8_t cmd_status = ~0;
   for (int i = 0; this->cmd_list[i].keyword != NULL; i++)
     if (strcmp(args[0], this->cmd_list[i].keyword) == 0) // Verify if command exists
       cmd_status = this->cmd_list[i].func(args);         // Execute associated command
@@ -106,8 +106,7 @@ char** SerialInterpreter::tokenizeArgs(char* str, struct delimiters* delims) {
   int arglen = 1;
   char** args = (char**)malloc(arglen * sizeof(char*)); // Allocs an argument array
 
-  struct parseAdvancement p = {
-      NULL};
+  struct parseAdvancement p = {};
 
   while (1) {
     /// Post check
@@ -167,7 +166,7 @@ void SerialInterpreter::stringDelim(char* str, struct delimiters* delims, struct
   }
 
   // Check for delims
-  if (!p->last_beacon_delim) // If no beacon
+  if (!(p->infos >> 2)) // If no beacon
     for (uint8_t i = 0; delims->delims[i]; i++)
       if (str[p->token_current] == delims->delims[i]) {
         p->infos |= (1 << 0);
@@ -178,17 +177,17 @@ void SerialInterpreter::stringDelim(char* str, struct delimiters* delims, struct
 
   // Check for beacons
   for (uint8_t i = 0; delims->beacon[i]; i++)
-    if (str[p->token_current] == delims->beacon[i])                              // If current char is a beacon delim
-      if (p->token_current - p->token_start == 0 && p->last_beacon_delim == 0) { // If we are at start of args + there's no previous beacon
-        p->last_beacon_delim = delims->beacon[i];
-        p->token_start = p->token_current + 1;
+    if (str[p->token_current] == delims->beacon[i])                     // If current char is a beacon delim
+      if (p->token_current - p->token_start == 0 && !(p->infos >> 2)) { // If we are at start of args + there's no previous beacon
+        p->infos |= (i + 1) << 2;                                       // Set last beacon id to i
+        p->token_start = p->token_current + 1;                          // Move token start pointer after beacon
 
         SerialInterpreter::stringEsc(str, delims, p);
         return;
 
-      } else if (p->last_beacon_delim == delims->beacon[i]) { // If previous beacon is same char, end arg
-        p->last_beacon_delim = 0;
-        p->infos |= (1 << 0);
+      } else if ((p->infos >> 2) == i + 1) { // If previous beacon is same char, end arg
+        p->infos &= ~(~(0) << 2);            // Reset last beacon id to 0
+        p->infos |= (1 << 0);                // Set delim info to 1
 
         SerialInterpreter::stringEsc(str, delims, p);
         return;

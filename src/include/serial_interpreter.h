@@ -20,10 +20,9 @@ struct delimiters {
 };
 
 struct parseAdvancement {
-  char last_beacon_delim;
   uint8_t token_start;
   uint8_t token_current;
-  uint8_t infos;
+  byte infos;
 };
 
 class SerialInterpreter {

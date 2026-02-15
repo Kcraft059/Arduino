@@ -12,17 +12,18 @@ uint8_t sendMsgCmd(char** args) {
   Wire.beginTransmission(value);
 
   for (uint8_t i = 2; args[i]; i++) {
-    byte value;
 
     if (args[i][0] == '&') {
-      value = (byte)args[i][1];
+      for (uint8_t j = 1; args[i][j]; j++)
+        Wire.write(args[i][j]);
+
     } else {
       char* endptr;
       value = strtod(args[i], &endptr);
       if (endptr == args[i]) return 1;
-    }
 
-    Wire.write((byte)value);
+      Wire.write((byte)value);
+    }
   }
 
   return Wire.endTransmission();
