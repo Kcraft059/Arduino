@@ -40,16 +40,16 @@ public:
   SerialInterpreter(serialCmd*);
   ~SerialInterpreter();
 
-  void listen();                           // Listen to serial port for commands
-  char* parse(char*);                      // Parses string from Serial input
-  uint8_t eval(char*, struct delimiters*); // Eval a string
+  void listen();                                      // Listen to serial port for commands
+  char* parse(char* delims);                          // Parses string from Serial input
+  uint8_t eval(char* str, struct delimiters* delims); // Eval a string
 
 private:
   void persistFree();
-  static char** tokenizeArgs(char*, struct delimiters*);
-  static void stringDelim(char*, struct delimiters*, struct parseAdvancement*);
-  static void stringEsc(char*, struct delimiters*, struct parseAdvancement*);
-  static void freeArgs(char**);
+  static char** tokenizeArgs(char* str, struct delimiters* delims);
+  static void stringDelim(char* str, struct delimiters* delims, struct parseAdvancement* p);
+  static void stringEsc(char* str, struct delimiters* delims, struct parseAdvancement* p);
+  static void freeArgs(char** args);
 };
 
 #endif

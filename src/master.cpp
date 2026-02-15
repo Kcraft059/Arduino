@@ -1,9 +1,5 @@
 #include <master.h>
 
-#define LCD_ADRR 58
-
-SerialInterpreter* srl_inter;
-
 uint8_t sendMsgCmd(char** args) {
   char* endptr;
   byte value = strtod(args[1], &endptr);
@@ -29,11 +25,8 @@ uint8_t sendMsgCmd(char** args) {
   return Wire.endTransmission();
 };
 
-uint8_t echoCmd(char** args) {
-  for (uint8_t i = 0; args[i]; i++)
-    Serial.println("[echo]: \"" + String(args[i]) + "\"");
-  return 0;
-};
+SerialInterpreter* srl_inter;
+HTlcd* lcd;
 
 void setup() {
   // Begin I2C connection
@@ -42,9 +35,19 @@ void setup() {
   // Init a serial connection and interpreter
   Serial.begin(9600);
   serialCmd cmds[] = {{"i2c", sendMsgCmd},
-                      {"echo", echoCmd},
                       {NULL, NULL}};
   srl_inter = new SerialInterpreter(cmds);
+
+  /* lcd = new HTlcd({2, 16});
+  lcd->setBrightness(200);
+
+  struct scrollText miamTxt;
+  miamTxt.str = "Miam           ";
+  miamTxt.delay = 500;
+  miamTxt.pos = {1, 1};
+  miamTxt.direction = scrollText::LEFT;
+
+  Serial.print("handle" + String(*lcd->addScrollText(miamTxt))); */
 
 #ifdef DEBUG
   Serial.println("[init]: Compiled for debug mode");
@@ -53,4 +56,5 @@ void setup() {
 
 void loop() {
   srl_inter->listen();
+  lcd->refresh();
 }
