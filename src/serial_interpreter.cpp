@@ -22,10 +22,15 @@ SerialInterpreter::~SerialInterpreter() {
 }
 
 void SerialInterpreter::listen() {
-  char* srl_cmd = this->parse(";\n\r");
-  
+  char* srl_cmd = this->parse("\n\r");
+
   if (srl_cmd) {
-    uint8_t status = this->eval(srl_cmd, " ");
+    struct delimiters delims{
+        " ",
+        "\"\'",
+        "\\"};
+
+    uint8_t status = this->eval(srl_cmd, &delims);
     free(srl_cmd);
   }
 }
@@ -72,7 +77,7 @@ char* SerialInterpreter::parse(char* delims) {
   return parsed_str;
 };
 
-uint8_t SerialInterpreter::eval(char* cmd_str, char* delims) {
+uint8_t SerialInterpreter::eval(char* cmd_str, struct delimiters* delims) {
   char** args = this->tokenizeArgs(cmd_str, delims);
 
 #ifdef DEBUG
@@ -93,7 +98,7 @@ uint8_t SerialInterpreter::eval(char* cmd_str, char* delims) {
   return cmd_status;
 };
 
-char** SerialInterpreter::tokenizeArgs(char* cmd_str, char* delims) {
+char** SerialInterpreter::tokenizeArgs(char* str, struct delimiters* delims) {
 #ifdef DEBUG
   Serial.print("[cmd][tok]: ");
 #endif
@@ -101,29 +106,111 @@ char** SerialInterpreter::tokenizeArgs(char* cmd_str, char* delims) {
   int arglen = 1;
   char** args = (char**)malloc(arglen * sizeof(char*)); // Allocs an argument array
 
-  // Tokenize str
-  char* token = strtok(cmd_str, delims);
+  struct parseAdvancement p = {
+      NULL};
 
-  while (token != NULL) {
-    // Copy token value
-    args[arglen - 1] = strdup(token);
+  while (1) {
+    /// Post check
+
+    SerialInterpreter::stringDelim(str, delims, &p);
+
+    // If delim has been reached
+    if (p.infos & (1 << 0)) {
+
+      if (p.token_current - p.token_start > 0) { // If arg is non-null string, store it in args[]
+        // Copy arg
+        args[arglen - 1] = (char*)malloc((p.token_current - p.token_start + 1) * sizeof(char)); // Allocs a new string in args
+        memcpy(args[arglen - 1], str + p.token_start, p.token_current - p.token_start);         // Copy memory
+        args[arglen - 1][p.token_current - p.token_start] = '\0';                               // End arg with null to make a cstr
+
+        // Expand args
+        args = (char**)realloc(args, ++arglen * sizeof(char*)); // Expand args
 
 #ifdef DEBUG
-    Serial.print("|" + String(token));
+        Serial.print("|\"" + String(args[arglen - 2]) + "\"");
 #endif
+      }
 
-    // Expend args
-    args = (char**)realloc(args, ++arglen * sizeof(char*));
-    token = strtok(NULL, " "); // Get to next token
+      if (str[p.token_current] == '\0')
+        break; // Break if we reached the end of the string
+
+      // Update infos
+      p.token_start = ++(p.token_current); // Collapse token range and go to next char
+      p.infos &= ~(1 << 0);                // Resets delim info
+
+    } else
+      // Delim has not been reached
+      p.token_current++; // Go to next char
   }
 
 #ifdef DEBUG
-  Serial.print("|\n");
+  Serial.print("|[\\0]\n");
 #endif
 
-  args[arglen - 1] = NULL;
+  args[arglen - 1] = NULL; // Terminate arg list with NULL
   return args;
 };
+
+void SerialInterpreter::stringDelim(char* str, struct delimiters* delims, struct parseAdvancement* p) {
+  /// Checks
+
+  // Check for end of string
+  if (str[p->token_current] == '\0') {
+    p->infos |= (1 << 0);
+    return;
+  }
+
+  // If is not escaped
+  if (p->infos & (1 << 1)) {
+    SerialInterpreter::stringEsc(str, delims, p);
+    return;
+  }
+
+  // Check for delims
+  if (!p->last_beacon_delim) // If no beacon
+    for (uint8_t i = 0; delims->delims[i]; i++)
+      if (str[p->token_current] == delims->delims[i]) {
+        p->infos |= (1 << 0);
+
+        SerialInterpreter::stringEsc(str, delims, p);
+        return;
+      }
+
+  // Check for beacons
+  for (uint8_t i = 0; delims->beacon[i]; i++)
+    if (str[p->token_current] == delims->beacon[i])                              // If current char is a beacon delim
+      if (p->token_current - p->token_start == 0 && p->last_beacon_delim == 0) { // If we are at start of args + there's no previous beacon
+        p->last_beacon_delim = delims->beacon[i];
+        p->token_start = p->token_current + 1;
+
+        SerialInterpreter::stringEsc(str, delims, p);
+        return;
+
+      } else if (p->last_beacon_delim == delims->beacon[i]) { // If previous beacon is same char, end arg
+        p->last_beacon_delim = 0;
+        p->infos |= (1 << 0);
+
+        SerialInterpreter::stringEsc(str, delims, p);
+        return;
+      }
+
+  SerialInterpreter::stringEsc(str, delims, p);
+}
+
+void SerialInterpreter::stringEsc(char* str, struct delimiters* delims, struct parseAdvancement* p) {
+  // Check for esc char
+  for (uint8_t i = 0; delims->escape[i]; i++)
+    if (str[p->token_current] == delims->escape[i] && !(p->infos & (1 << 1))) { // If current char is '\' and is not escaped
+      p->infos |= (1 << 1);                                                     // Set escape status
+      memmove(str + p->token_current,                                           // Move string to the left one char to remove esc char
+              str + p->token_current + 1,
+              strlen(str + p->token_current));
+      p->token_current--; // Since string has been moved to current char, we need to move back the current token pointer
+      return;
+    }
+
+  p->infos &= ~(1 << 1); // Remove escape status
+}
 
 void SerialInterpreter::freeArgs(char** args) {
   for (int i = 0; args[i] != NULL; i++)

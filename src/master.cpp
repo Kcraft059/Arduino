@@ -28,6 +28,12 @@ uint8_t sendMsgCmd(char** args) {
   return Wire.endTransmission();
 };
 
+uint8_t echoCmd(char** args) {
+  for (uint8_t i = 0; args[i]; i++)
+    Serial.println("[echo]: \"" + String(args[i]) + "\"");
+  return 0;
+};
+
 void setup() {
   // Begin I2C connection
   Wire.begin();
@@ -35,6 +41,7 @@ void setup() {
   // Init a serial connection and interpreter
   Serial.begin(9600);
   serialCmd cmds[] = {{"i2c", sendMsgCmd},
+                      {"echo", echoCmd},
                       {NULL, NULL}};
   srl_inter = new SerialInterpreter(cmds);
 
