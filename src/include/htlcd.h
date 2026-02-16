@@ -46,9 +46,8 @@ struct handle {
   TH h;
 };
 
-class HTlcd : WireDevice {
+class HTlcd : public WireDevice {
 private:
-  struct lcdType type;
   struct handle<struct scrollText, uint8_t*> scrollTexts[MAX_SCROLL_TEXTS];
   const struct {
     uint8_t printStr = 1;
@@ -60,21 +59,25 @@ private:
   } commands;
 
 public:
+  struct lcdType type;
+
+public:
   HTlcd(struct lcdType type);
   HTlcd(uint8_t adress, struct lcdType type);
 
+  
   // Abstract
   void refresh();
   uint8_t* addScrollText(struct scrollText text);
   uint8_t delScrollText(uint8_t handle);
-
+  
   // Direct commands
   uint8_t clearAll();
   uint8_t printStr(char* str);
   uint8_t printChr(char chr);
   uint8_t moveCursor(struct chrPosition pos);
   uint8_t setBrightness(uint8_t brightness);
-
+  
 private:
   uint8_t setType(struct lcdType* type);
   uint8_t updateScrollText(struct scrollText* text);

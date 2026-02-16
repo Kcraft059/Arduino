@@ -52,6 +52,8 @@ uint8_t HTlcd::printChr(char chr) {
 }
 
 uint8_t HTlcd::moveCursor(struct chrPosition pos) {
+  if (!(pos.line >= 1 && pos.line <= this->type.lines && pos.column >= 1 && pos.column <= this->type.columns))
+    return 1;
   uint8_t data[2] = {pos.line, pos.column};
   return WireDevice::sendCmd(this->commands.moveCursor, data, 2);
 };

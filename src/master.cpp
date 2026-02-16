@@ -85,7 +85,34 @@ void setup() {
 #endif
 }
 
+byte infos = 0b00000001;
+
 void loop() {
-  srl_inter->listen();
-  lcd->refresh();
+  // srl_inter->listen();
+  // lcd->refresh();
+
+  if (Serial.available()) {
+    char chr = Serial.read();
+
+    switch (chr) {
+    case 9:
+      infos = ((infos & (0b1 << 7)) ^ (0b1 << 7)) | 0b1;
+      break;
+    case 127:
+      if ((infos & ~(0b1 << 7)) > 1)
+        infos = (infos & (0b1 << 7)) | ((infos & (~(byte)0 >> 1)) - 1);
+      lcd->moveCursor({((infos & (0b1 << 7)) >> 7) + 1, (infos & ~(0b1 << 7))});
+      lcd->printChr(' ');
+      break;
+    default:
+      if ((infos & ~(0b1 << 7)) > lcd->type.columns) {
+        uint8_t data[] = {((infos & (0b1 << 7)) >> 7) + 1};
+        lcd->sendCmd(3, data, 1);
+        infos = ((infos & (0b1 << 7)) + 0b1);
+      }
+      lcd->moveCursor({((infos & (0b1 << 7)) >> 7) + 1, (infos & ~(0b1 << 7))});
+      lcd->printChr(chr);
+      infos = (infos & (0b1 << 7)) | ((infos & (~(byte)0 >> 1)) + 1);
+    }
+  }
 }
