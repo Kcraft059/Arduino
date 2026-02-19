@@ -2,7 +2,7 @@
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
-// #include <stdio.h>
+#include <stdio.h>
 #include <util/delay.h>
 
 void usart_init(int baud) {
@@ -93,12 +93,11 @@ void eeprom_erase_byte(const uint16_t addr) {
   EECR = prev_EECR;
 }
 
-ISR(INT0_vect) {
+/* ISR(INT0_vect) {
   PORTB |= (1 << PB5); // Turns portb5 to high;
 };
 
-int main(void) {
-  DDRB |= (1 << PB5);   // Set PB5 as output
+void init_int0() {
   DDRD &= ~(1 << PD2);  // Set PD2 as input
   PORTD &= ~(1 << PD2); // pull-up
 
@@ -107,6 +106,34 @@ int main(void) {
   EIMSK |= (1 << INT0); // Allow int0 trigger
 
   sei(); // Enable all interrupts
+} */
 
-  while (1); // Prevent program end
+inline void init_ADC(uint8_t prescaler) {
+  ADCSRA = (1 << ADEN) | ((prescaler & 0b111) << ADPS0);
+  ADMUX = (1 << REFS0);
+};
+
+uint16_t read_analog_ADC(uint8_t pinNum) {
+  ADMUX = (ADMUX & ~0b1111) | ((pinNum & 0b1111) << MUX0); // REFS0, AVCC with external capacitor at AREF pin, MUX0 0b0000 input as ADC0
+  ADCSRA |= (1 << ADSC);                                   // Start conversion
+
+  while (ADCSRA & (1 << ADSC))
+    ; // Wait for end of conversion
+
+  return ADCL | ((uint16_t)ADCH << 8);
+};
+
+int main(void) {
+  usart_init(9600);
+  init_ADC(7);
+
+  DDRC &= ~(1 << PC0);   // Set PC0 as input
+  DIDR0 |= (1 << ADC0D); // Disable digital on pin ADC0
+
+  while (1) {
+    char strbuf[64];
+    uint16_t value = read_analog_ADC(0);
+    sprintf(strbuf, "Value: %d\n", value);
+    _usart_send_str(strbuf);
+  };
 };
