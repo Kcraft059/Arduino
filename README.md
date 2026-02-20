@@ -48,6 +48,11 @@ arduino-cli upload -p <sdev> \
 
 ## Serial console
 
+Open using arduino-cli 
+```bash
+arduino-cli monitor -p <sdev> -c <baud>
+```
+
 Open in raw mode with screen
 ```bash
 screen <sdev> <baud>
