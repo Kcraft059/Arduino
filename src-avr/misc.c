@@ -123,3 +123,30 @@ void timer0_init(uint8_t clks) {
   TIMSK0 = (1 << TOIE0);                                 // enable overflow interrupt
   sei();                                                 // enable global interrupts
 }
+
+/// MARK: PWM with Clock0
+
+inline void init_CL0(uint8_t mode) {
+  TCCR0A = (0b10 << COM0A0) | (0b11 << WGM00); // Non inverting mode + Configure in fast PWM
+  TCCR0B = (mode & 0b111);                     // Only take mode bits from mode
+};
+
+inline void set_cmp_OC0A(uint8_t cmp) {
+  OCR0A = cmp; // Set compare register to threshold
+}
+
+/// MARK: ADC
+
+inline void init_ADC(uint8_t prescaler) {
+  ADCSRA = (1 << ADEN) | ((prescaler & 0b111) << ADPS0);
+};
+
+uint16_t read_analog_ADC(uint8_t pinNum) {
+  ADMUX = (1 << REFS0) | ((pinNum & 0b1111) << MUX0); // REFS0, AVCC with external capacitor at AREF pin, MUX0 0b0000 input as ADC0
+  ADCSRA |= (1 << ADSC);                              // Start conversion
+
+  while (ADCSRA & (1 << ADSC))
+    ; // Wait for end of conversion
+
+  return ADCL | ((uint16_t)ADCH << 8);
+};
