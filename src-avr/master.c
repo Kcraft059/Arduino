@@ -31,6 +31,7 @@ void update_latch() {
 ISR(TIMER0_OVF_vect) { // On overflow
   if (srl_data_buf_info & UPD_LATCH_MASK) {
     update_latch();
+    PORTB &= ~(1 << PB4); // Turn off data pin
     return;
   }
 
@@ -56,7 +57,7 @@ int main(void) {
 
   DDRD |= (1 << PD6); // Configure pin 6 (srl clock) as ouput
 
-  init_fast_pwm0(4);      // Config Clock0
+  init_fast_pwm0(1);      // Config Clock0
   set_OCA_duty_cyle(127); // Init PWM timer
 
   while (1) {
