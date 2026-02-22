@@ -98,7 +98,7 @@ void eeprom_erase_byte(const uint16_t addr) {
 //   PORTB |= (1 << PB5); // Turns portb5 to high;
 // };
 
-void init_int0() {
+/* void init_int0() {
   DDRD &= ~(1 << PD2);  // Set PD2 as input
   PORTD &= ~(1 << PD2); // pull-up
 
@@ -107,7 +107,7 @@ void init_int0() {
   EIMSK |= (1 << INT0); // Allow int0 trigger
 
   sei(); // Enable all interrupts
-}
+} */
 
 /// MARK: Timer0/Clock0
 
