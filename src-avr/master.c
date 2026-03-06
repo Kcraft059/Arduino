@@ -73,10 +73,10 @@ int main(void) {
   usart_init(9600);
 
   // Init
-  DDRB |= (1 << PB5) | (1 << PB4) | (1 << PB3); // Configure pin 13 (latch) & 12 (srl data) as outputs & 15 (clock)
+  /* DDRB |= (1 << PB5) | (1 << PB4) | (1 << PB3); // Configure pin 13 (latch) & 12 (srl data) as outputs & 15 (clock)
 
   init_fast_pwm2(1);        // Config Clock0
-  set_duty_cycle_pwm2(127); // Init PWM timer
+  set_duty_cycle_pwm2(127); // Init PWM timer */
 
   // Init rotary
   /* DDRD &= ~((1 << PD3) | (1 << PD2)); // Configure 3 (B) et 2 (A) as input
@@ -88,11 +88,13 @@ int main(void) {
   DDRC &= ~(1 << PC0);
   DIDR0 |= (1 << ADC0D);
 
-  #define LED_MASK ((1 << PC4) | (1 << PC5) | (1 << PC6))
+  /* #define LED_MASK ((1 << PC4) | (1 << PC5) | (1 << PC6))
 
   DDRD |= LED_MASK; // Setup pin A1..3 for leds */
 
-  send_srl_data(0);
+  // send_srl_data(0);
+
+  DDRB |= (1 << PB5);
 
   while (1) {
     int value = read_analog_ADC(0);
@@ -104,7 +106,12 @@ int main(void) {
     for (int i = 0; buf[i]; i++)
       usart_send(buf[i]);
     
-    uint8_t night_mode = value > 1010;
+      PORTB ^= (1 << PB5);
+
+    _delay_ms(500);
+    
+    
+   /*  uint8_t night_mode = value > 1010;
 
     if (!night_mode) {
 
@@ -130,5 +137,6 @@ int main(void) {
       PORTD ^= (1 << PD5);
       _delay_ms(500);
     }
+  */
   };
-};
+}
