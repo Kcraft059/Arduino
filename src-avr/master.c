@@ -4,13 +4,6 @@
 #include <string.h>
 #include <util/delay.h>
 
-/// MARK: Clock
-
-volatile void;
-
-void init_clock0(uint8_t prescaler) {
-}
-
 /// MARK: Rotary encoder reading
 
 volatile uint8_t status = 0;
@@ -94,34 +87,48 @@ int main(void) {
 
   DDRC &= ~(1 << PC0);
   DIDR0 |= (1 << ADC0D);
-  //PORTC |= (1 << PC0);
 
-  send_srl_data(nums[9]);
+  #define LED_MASK ((1 << PC4) | (1 << PC5) | (1 << PC6))
+
+  DDRD |= LED_MASK; // Setup pin A1..3 for leds */
+
+  send_srl_data(0);
 
   while (1) {
     int value = read_analog_ADC(0);
-    float tension = value * 5 / 1023.0; 
-    float temp = tension / 0.01;
-    
+
     char buf[64];
-    char buf_tens[32];
-    char buf_temp[32];
 
-    dtostrf(tension,1,5,buf_tens);
-    dtostrf(temp,1,5,buf_temp);
-
-    sprintf(buf, "Valeurs: %d, %s, %s\n", value, buf_tens, buf_temp);
+    sprintf(buf, "Valeur: %d\n", value);
 
     for (int i = 0; buf[i]; i++)
       usart_send(buf[i]);
+    
+    uint8_t night_mode = value > 1010;
 
-    _delay_ms(600);
-    /* if ((count / 4) > 9)
-      count = 9 * 4;
-    if ((count / 4) < -9)
-      count = -9 * 4;
+    if (!night_mode) {
 
-    if (!srl_data_buf_info)
-      send_srl_data(nums[abs(count / 4)] | ((count / 4) & (1 << 7)) >> 7); */
+      PORTD = (PORTD & ~LED_MASK) | (1 << PD4);
+      for (uint8_t i = 0; i < 10; i++) {
+        PORTD ^= (1 << PD4);
+        _delay_ms(500);
+      }
+      
+      PORTD = (PORTD & ~LED_MASK) | (1 << PC5);
+      _delay_ms(3000);
+      
+      PORTD = (PORTD & ~LED_MASK) | (1 << PC6);
+      
+      for (uint8_t i = 9; i > 0; i--) {
+        send_srl_data(nums[i]);
+        _delay_ms(1000);
+      }
+      
+      send_srl_data(0);
+    } else {
+      PORTD = PORTD & ~((1 << PD4) | (1 << PD6)); 
+      PORTD ^= (1 << PD5);
+      _delay_ms(500);
+    }
   };
 };
