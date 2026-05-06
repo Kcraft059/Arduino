@@ -17,6 +17,7 @@ build:
   	--fqbn $(MODEL) \
   	--build-path $(BUILD_DIR) \
 		--build-property "build.extra_flags=$(foreach elem, $(FLAGS),\"$(subst __, ,$(elem))\")" \
+		--build-property "build.core=" \
 		$(SRC_DIR)
 	@ln -sf $(BUILD_DIR)/compile_commands.json 
 	@rm -rf $(SRC_DIR)/$(INO_NAME).ino

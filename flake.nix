@@ -20,22 +20,38 @@
       };
     in
     {
-      devShells."${system}".default = pkgs.mkShell {
-        packages = with pkgs; [
-          arduino-cli
-        ];
+      devShells."${system}" = rec {
+        avr_utils = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            #avrlibc
+            pkgsCross.avr.buildPackages.gcc
+            pkgsCross.avr.avrlibc
+            avrdude
+          ];
 
-        shellHook = ''
-          export ARDUINO_DIRECTORIES_DATA=$PWD/arduino-data # Arduino-packages-path -> ~/Library/Arduino*
+          shellHook = ''
+            export AVR_LIBC_INCLUDE=${pkgs.pkgsCross.avr.avrlibc}/avr/include
+            exec ${pkgs.zsh}/bin/zsh --rcs -i -c "${pkgs.zsh}/bin/zsh -i"
+          '';
+        };
+        arduino = pkgs.mkShell {
+          packages = with pkgs; [
+            arduino-cli
+          ];
 
-          cat > .zsh-shell <<'EOF'
-          TRAPEXIT() {
-            rm -rf .zsh-shell
-          }
-          EOF
+          shellHook = ''
+            export ARDUINO_DIRECTORIES_DATA=$PWD/.arduino-data # Arduino-packages-path -> ~/Library/Arduino*
 
-          exec ${pkgs.zsh}/bin/zsh --rcs -i -c "source .zsh-shell; ${pkgs.zsh}/bin/zsh -i"
-        '';
+            cat > .zsh-shell <<'EOF'
+            TRAPEXIT() {
+              rm -rf .zsh-shell
+            }
+            EOF
+
+            exec ${pkgs.zsh}/bin/zsh --rcs -i -c "source .zsh-shell; ${pkgs.zsh}/bin/zsh -i"
+          '';
+        };
+        default = arduino;
       };
     };
 }
