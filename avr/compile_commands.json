@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "/Volumes/Data/camille/Developper/arduino/avr",
+    "file": "/Volumes/Data/camille/Developper/arduino/avr/src/main.S",
+    "command": "avr-gcc -mmcu=atmega328p -I./src/include/ -I/nix/store/infzsgghhxwlxzm2m5nyi0v6d9mas2m5-avr-libc-avr-2.2.1/avr/include -Os -Wall -DF_CPU=16000000UL  -nostartfiles -D__AVR_ATmega328P__ -D__AVR_ATmega328__ -D__AVR_ARCH__=5 -c /Volumes/Data/camille/Developper/arduino/avr/src/main.S"
+  }
+]

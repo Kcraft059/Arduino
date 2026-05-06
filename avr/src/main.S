@@ -1,7 +1,4 @@
-; Standalone AVR assembly — turn on LED on PB5 (Arduino pin 13)
-; Target: ATmega328P (Arduino Pro / Uno)
-
-#include <avr/io.h>          
+#include <avr/io.h>
 
 .section .vectors                     ; Interrupt vector table
 .org 0x0000

@@ -27,6 +27,7 @@
             pkgsCross.avr.buildPackages.gcc
             pkgsCross.avr.avrlibc
             avrdude
+            jq
           ];
 
           shellHook = ''
