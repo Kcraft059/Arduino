@@ -1,59 +1,43 @@
+;;
+; Assembly init program for atmega328p
+; @Kcraft059
+;;
+
 #include <avr/io.h>
-
 .section .vectors                     ; Interrupt vector table
-.org 0x0000
-    jmp main
+.org 0x0000                           ; Reset Interrupt
+    jmp init
 
-.section .bss                         ; SRAM Allocation
-led_mask: .skip 1                     ; Alloc 1 byte of mem for led_mask
+.section .data                        ; Data section (value stored in flash, label addr in mem) 
+foo: .byte 34
+bar: .byte 3
 
-.section .text                     
-main:
-    ldi r16, lo8(RAMEND)               ; Initialize SP to end of mem
-    out _SFR_IO_ADDR(SPL), r16        
-    ldi r16, hi8(RAMEND)
-    out _SFR_IO_ADDR(SPH), r16
+.section .text
+init: 
+  clr r1                              ; Zero r1 reg
+                                      ; Init Stack pointer
+  ldi r16, lo8(RAMEND)                
+  out _SFR_IO_ADDR(SPL), r16
+  ldi r16, hi8(RAMEND)
+  out _SFR_IO_ADDR(SPH), r16
 
-    ldi r16, (1 << PORTB5)             ; Initialize values
-    sts led_mask, r16
+                                      ; Data copy
+  ldi ZL, lo8(__data_load_start)      ; Load flash data adress in Z reg
+  ldi ZH, hi8(__data_load_start)      
+  ldi XL, lo8(__data_start)           ; Load sram start adress in X reg           
+  ldi XH, hi8(__data_start)           
+  ldi r17, lo8(__data_end)            ; Load sram end adress in r17-18 reg
+  ldi r18, hi8(__data_end)            
 
-    ldi r16, (1 << DDB5)               ; Set data direction
-    out _SFR_IO_ADDR(DDRB), r16
+data_copy_loop:
+  lpm r0, Z+                          ; Read data from flash
+  st X+, r0                           ; Load data in sram 
 
-loop:
-    rcall led_toggle                   ; Call led toggling
+  cp XL, r17                          ; Compare X (16 bit) to see if we reached end of data section
+  cpc XH, r18                         
+  brlo data_copy_loop                 ; If X is in the data range, continue loop
 
-    ldi r16, 255                       ; Awfull delay method           
-delay_0:                                
-    ldi r17, 255
-delay_1:
-    ldi r18, 16
-delay_2:
-    dec r18
-    brne delay_2
+  rcall ledOn
 
-    dec r17
-    brne delay_1 
-
-    dec r16
-    brne delay_0
-
-    rjmp loop                          ; Loop on itself
-
-led_toggle:
-    push r16
-    push r17
-    in r16, _SFR_IO_ADDR(SREG)
-    push r16
-
-    in r16 ,_SFR_IO_ADDR(PORTB)       ; Load PORTB state
-    lds r17, led_mask                 ; Create bit mask for PORTB5
-    eor r16, r17                      ; XOR to toggle led 
-    out _SFR_IO_ADDR(PORTB), r16      ; Update PORTB state
-
-    pop r16
-    out _SFR_IO_ADDR(SREG), r16
-    pop r17
-    pop r16
-
-    ret
+end:                                 
+  rjmp end                            ; End loop

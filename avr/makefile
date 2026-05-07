@@ -45,7 +45,7 @@ compile_commands.json: $(OBJ)
 
 build: $(TARGET) compile_commands.json
 
-pure: FLAGS += -nostartfiles
+pure: FLAGS += -nostartfiles -nostdlib -nodefaultlibs -g0 -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-ident
 pure: build
 
 upload: $(TARGET)
