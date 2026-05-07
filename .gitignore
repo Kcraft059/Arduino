@@ -1,3 +1,3 @@
 build
-arduino-data
+compile_commands.json
 .*
