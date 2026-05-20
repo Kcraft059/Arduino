@@ -135,7 +135,7 @@ mlc_new_header:                 ; New header at addr in Z reg & new size in r24:
   andi r19, 0b1111              ; Get only first 4 bits of sizeh 
   andi r25, 0b1111              ; Get only first 4 bits of offset
   swap r19                      
-  or r17, r25                   ; Aggregate high 4 bits of size and high 4 bits of offset in r17
+  or r19, r25                   ; Aggregate high 4 bits of size and high 4 bits of offset in r17
   st Z+, r24                    ; Store lower 8 bits of size in 1st byte of header 
   st Z+, r18                    ; Store lower 8 bits of offset in 2nd byte of header
   st Z+, r19                    ; Store shared size/offset bits
@@ -186,7 +186,6 @@ free_ret:
   pop r16
   
   ret
-
 
 ; MARK: Debug
 .global malloc_get_header

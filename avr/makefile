@@ -17,7 +17,8 @@ ifeq ($(MMCU), atmega328p)
 		ARCH_CFLAGS := -D__AVR_ATmega328P__ -D__AVR_ATmega328__ -D__AVR_ARCH__=5
     ARCH_LFLAGS := --defsym __VECTOR_TABLE_START=0x0 --defsym __VECTOR_TABLE_END=0x68
 endif
-FLAGS 			:= -I$(INCLUDE_DIR) -I$(AVR_LIBC_INCLUDE) -Os -Wall $(ARCH_FLAGS) $(EXTRA_FLAGS)
+FLAGS 			:= -I$(INCLUDE_DIR) -I$(AVR_LIBC_INCLUDE) -Os -Wall $(ARCH_FLAGS) $(EXTRA_FLAGS) 
+LFLAGS 			:= $(ARCH_LFLAGS) $(EXTRA_LFLAGS)
 CLANG_FLAGS := $(ARCH_CFLAGS)
 
 # Files
@@ -54,8 +55,9 @@ compile_commands.json: $(OBJ)
 build: $(TARGET) compile_commands.json
 
 pure: $(LD_SCRIPT)
-pure: FLAGS += -ffunction-sections -fdata-sections -nostartfiles -nostdlib -nodefaultlibs -g0 -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-ident
-pure: LFLAGS += $(ARCH_LFLAGS) -T $(LD_SCRIPT) --gc-sections
+pure: FLAGS += -ffunction-sections -fdata-sections -nostartfiles -g0 -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-ident
+# -nostdlib -nodefaultlibs
+pure: LFLAGS += -T $(LD_SCRIPT) --gc-sections
 pure: build
 
 upload: $(TARGET)
