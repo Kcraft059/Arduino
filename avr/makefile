@@ -17,7 +17,7 @@ ifeq ($(MMCU), atmega328p)
 		ARCH_CFLAGS := -D__AVR_ATmega328P__ -D__AVR_ATmega328__ -D__AVR_ARCH__=5
     ARCH_LFLAGS := --defsym __VECTOR_TABLE_START=0x0 --defsym __VECTOR_TABLE_END=0x68
 endif
-FLAGS 			:= -I$(INCLUDE_DIR) -I$(AVR_LIBC_INCLUDE) -Os -Wall $(ARCH_FLAGS) $(EXTRA_FLAGS) 
+FLAGS 			:= -mmcu=$(MMCU) -I$(INCLUDE_DIR) -I$(AVR_LIBC_INCLUDE) -Os -Wall $(ARCH_FLAGS) $(EXTRA_FLAGS) 
 LFLAGS 			:= $(ARCH_LFLAGS) $(EXTRA_LFLAGS)
 CLANG_FLAGS := $(ARCH_CFLAGS)
 
@@ -33,7 +33,7 @@ LD_SCRIPT 	:= ./avr.ld
 # Compile
 $(OBJ_DIR)/%.o: $(SRC_DIR)/% 
 	@mkdir -p $(dir $@)
-	$(CC) -mmcu=$(MMCU) $(FLAGS) -c $< -o $@ 
+	$(CC) $(FLAGS) -c $< -o $@ 
 	@jq -n \
 		--arg dir "$(CURDIR)" \
 		--arg file "$(abspath $<)" \
@@ -42,17 +42,30 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%
 
 $(TARGET): $(OBJ)
 	@mkdir -p $(dir $@)
-	$(CC) -mmcu=$(MMCU) $(FLAGS) $(addprefix -Wl$(,),$(LFLAGS)) $^ -o $@
+	$(CC) $(FLAGS) $(addprefix -Wl$(,),$(LFLAGS)) $^ -o $@
 	
 
 compile_commands.json: $(OBJ)
 	@jq -s '.' $(OBJ_DIR)/*.json > $@
 	@echo "-> Generated compile_commands.json"
 
-# Targets
-.PHONY: pure build clean upload info dump
+.asm-lsp.toml:
+	@printf '[default_config]\n' > $@
+	@printf 'version = "0.10.1"\n' >> $@
+	@printf 'assembler = "avr"\n' >> $@
+	@printf 'instruction_set = "AVR"\n' >> $@
+	@printf '\n' >> $@
+	@printf '[default_config.opts]\n' >> $@
+	@printf 'compiler = "avr-gcc"\n' >> $@
+	@printf 'compile_flags_txt = [%s]\n' '$(foreach elem,$(FLAGS),"$(elem)"$(,))' >> $@
+	@printf 'diagnostics = true\n' >> $@
+	@printf 'default_diagnostics = false\n' >> $@
+	@echo "-> Generated .asm-lsp.toml"
 
-build: $(TARGET) compile_commands.json
+# Targets
+.PHONY: pure build clean upload info dump .asm-lsp.toml
+
+build: $(TARGET) compile_commands.json .asm-lsp.toml
 
 pure: $(LD_SCRIPT)
 pure: FLAGS += -ffunction-sections -fdata-sections -nostartfiles -g0 -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-ident
