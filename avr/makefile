@@ -57,7 +57,7 @@ compile_commands.json: $(OBJ)
 	@printf '\n' >> $@
 	@printf '[default_config.opts]\n' >> $@
 	@printf 'compiler = "avr-gcc"\n' >> $@
-	@printf 'compile_flags_txt = [%s]\n' '$(foreach elem,$(FLAGS),"$(elem)"$(,))' >> $@
+	@printf 'compile_flags_txt = [%s]\n' '$(foreach elem,$(FLAGS) -o /dev/null,"$(elem)"$(,))' >> $@
 	@printf 'diagnostics = true\n' >> $@
 	@printf 'default_diagnostics = false\n' >> $@
 	@echo "-> Generated .asm-lsp.toml"
