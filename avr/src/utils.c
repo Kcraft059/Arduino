@@ -1,7 +1,7 @@
 #include <avr/io.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <util/delay.h>
 
@@ -22,19 +22,45 @@ void usart_init(uint16_t ubrr);
 void blink_bin(uint16_t inp);
 void blink_iter(uint16_t itr);
 void fast_blink();
+void usart_send_str(char* str);
 
 void c_entry() {
   usart_init(9600);
-  char* str = malloc(407);
-  char* str_ofst = str + 5;
-  memcpy(str, "size:", 5);
+  char str[24];
 
-  struct mlc_header hdr = malloc_get_header(str);
-  uint16_t size = hdr.sizel | ((hdr.sizeh_offseth & 0xf) << 8);
+  char* str1 = malloc(64);
+  utoa((uint16_t)str1, str, 16);
+  usart_send_str(str);
 
-  utoa(size, str_ofst, 10);
+  char* str2 = malloc(64);
+  utoa((uint16_t)str2, str, 16);
+  usart_send_str(str);
+
+  char* str3 = malloc(10);
+  utoa((uint16_t)str3, str, 16);
+  usart_send_str(str);
+
+  free(str1);
+	free(str2);
+
+  char* str4 = malloc(127);
+  utoa((uint16_t)str4, str, 16);
+  usart_send_str(str);
+
+  char* str5 = malloc(2);
+  utoa((uint16_t)str5, str, 16);
+  usart_send_str(str);
+
+  utoa(malloc_get_header(str5).offsetl, str, 10);
+  usart_send_str(str);
+  utoa(malloc_get_header(str5).sizel, str, 10);
+  usart_send_str(str);
+}
+
+inline void usart_send_str(char* str) {
   for (uint8_t i = 0; str[i] != '\0'; i++)
     usart_send(str[i]);
+  usart_send('\n');
 }
 
 void usart_init(uint16_t baud) {

@@ -68,9 +68,9 @@ compile_commands.json: $(OBJ)
 build: $(TARGET) compile_commands.json .asm-lsp.toml
 
 pure: $(LD_SCRIPT)
-pure: FLAGS += -ffunction-sections -fdata-sections -nostartfiles -g0 -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-ident
+pure: FLAGS += -ffunction-sections -fdata-sections -nostartfiles -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-ident
 # -nostdlib -nodefaultlibs
-pure: LFLAGS += -T $(LD_SCRIPT) --gc-sections
+pure: LFLAGS += -T $(LD_SCRIPT) --gc-sections --strip-debug
 pure: build
 
 upload: $(TARGET)
