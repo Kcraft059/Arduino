@@ -99,9 +99,15 @@ mlc_init_header:                                      ; Init with flags at r20
   rjmp mlc_new_header
 
 mlc_match_nullsize:                                   ; Match for free space in 0sized header & previous offset in r18:r19 & alloc size in r24:r25
+	cpi r18, lo8(ALC_HDR_END)                           ; Check if offset is ALC_HDR_END
+	ldi r20, hi8(ALC_HDR_END)
+	cpc r19, r20
+	breq mlc_match_null_preserve                        ; In this case do not resize offset
+
 	sub r18, r24                                        ; Set offset = prev_offset - alloc_size
 	sbc r19, r25
 
+mlc_match_null_preserve:
 	sbiw ZL, 3                                          ; Set ptr to start of nullsized header
 
   rjmp mlc_new_header                                 ; Overwrite 0sized header
@@ -247,9 +253,15 @@ free_first_header:
 	andi r17, 0b1111                                    ; Load higher 4 bits of size into r17
 	andi r19, 0b1111                                    ; Load higher 4 bits of offset into r19
 	
-	add r18, r16                                        ; Set new_offset = offset + size
-	adc r19, r16
+	cpi r18, lo8(ALC_HDR_END)                           ; Compare offset to ALC_HDR_END
+	ldi r20, hi8(ALC_HDR_END)
+	cpc r19, r20
+	breq free_first_header_preserve                     ; If reached end preserve offset
 
+	add r18, r16                                        ; Set new_offset = offset + size
+	adc r19, r17
+
+free_first_header_preserve:
 	andi r19, 0b1111                                    ; Zero higher 4 bits of size
 	swap r19
 	st Z, r1                                            ; Zero lower 8 bits of size

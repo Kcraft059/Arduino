@@ -23,38 +23,70 @@ void blink_bin(uint16_t inp);
 void blink_iter(uint16_t itr);
 void fast_blink();
 void usart_send_str(char* str);
+uint8_t validate_heap(void* start);
 
 void c_entry() {
   usart_init(9600);
-  char str[24];
 
-  char* str1 = malloc(64);
-  utoa((uint16_t)str1, str, 16);
-  usart_send_str(str);
+  char buf[32];
+  uint8_t* allc = malloc(0);
 
-  char* str2 = malloc(64);
-  utoa((uint16_t)str2, str, 16);
-  usart_send_str(str);
+  free(allc);
+  validate_heap(allc);
 
-  char* str3 = malloc(10);
-  utoa((uint16_t)str3, str, 16);
-  usart_send_str(str);
+#define ALC_TABLE_NUM 16
+  void* allocs[ALC_TABLE_NUM] = {};
 
-  free(str1);
-	free(str2);
+  for (uint16_t i = 0; i < 100; i++) {
+    uint8_t idx = rand() % ALC_TABLE_NUM;
 
-  char* str4 = malloc(127);
-  utoa((uint16_t)str4, str, 16);
-  usart_send_str(str);
+    if (allocs[idx] == NULL) {
+      uint16_t sz = rand() % 400;
 
-  char* str5 = malloc(2);
-  utoa((uint16_t)str5, str, 16);
-  usart_send_str(str);
+      sprintf(buf, "-> malloc(%d)", sz);
+      usart_send_str(buf);
 
-  utoa(malloc_get_header(str5).offsetl, str, 10);
-  usart_send_str(str);
-  utoa(malloc_get_header(str5).sizel, str, 10);
-  usart_send_str(str);
+      if ((allocs[idx] = malloc(sz)) == NULL)
+        usart_send_str("[null]");
+
+    } else {
+      sprintf(buf, "-> free(%p)", allocs[idx]);
+      usart_send_str(buf);
+
+      free(allocs[idx]);
+      allocs[idx] = NULL;
+    }
+    if (validate_heap(allc))
+      return;
+  }
+}
+
+uint8_t validate_heap(void* ptr) {
+  struct mlc_header hdr = malloc_get_header(ptr);
+  int size = hdr.sizel | ((hdr.sizeh_offseth & 0xf) << 8);
+  int offset = hdr.offsetl | ((hdr.sizeh_offseth >> 4) << 8);
+
+  char str[32];
+
+  while (1) {
+    sprintf(str, "[p:%p][s:%d][o:%d]", ptr, size, offset);
+    for (int i = 0; str[i] != 0; i++)
+      usart_send(str[i]);
+
+    ptr = (uint8_t*)(size + offset + 3 + (uint16_t)ptr);
+
+    if (offset == 0xfff) break;
+
+    if ((uint16_t)ptr >= RAMEND) {
+      usart_send_str("[iv]");
+      return 1;
+    }
+    hdr = malloc_get_header(ptr);
+    size = hdr.sizel | ((hdr.sizeh_offseth & 0xf) << 8);
+    offset = hdr.offsetl | ((hdr.sizeh_offseth >> 4) << 8);
+  }
+  usart_send_str("[v]");
+  return 0;
 }
 
 inline void usart_send_str(char* str) {
