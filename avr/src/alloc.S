@@ -28,29 +28,35 @@
 
 #include <avr/io.h>
 
-#define ALC_HDR_SIZE 0x03                             /**< Size of header in bytes                 */
-#define ALC_HDR_END 0x0fff                            /**< End of chain mark (in offset)           */
-#define ALC_SP_PADDING 0x04                           /**< Padding between heap and stack in bytes */
+#define ALC_HDR_SIZE 0x03                             // Size of header in bytes
+#define ALC_HDR_END 0x0fff                            // End of chain mark (in offset)
+#define ALC_SP_PADDING 0x04                           // Padding between heap and stack in bytes
 
 .section .data
-.global alc_flags
 alc_flags: .byte 0b00000001                           ; Malloc flag storage 0:first_alloc
 
-.section .bss
-mlc_sp_addr: .skip 2
-
 .section .text
+
+/**
+ * Allocates a block of memory of given size (r24:r25) and return addr (r24:r25)
+ **/
 .global malloc                                        ; MARK: malloc
+#define malloc_FRAME_SIZE 2
+#define malloc_SPADDR_OFST
 malloc:                                               ; size: r24:r25 & used regs: r18-r21 + Z
   push r16                                            ; Store used regs to stack
   push r17
+	push YL
+	push YH
 
   in r16, _SFR_IO_ADDR(SPL)                           ; Load end of available sram (SP)
   in r17, _SFR_IO_ADDR(SPH)
   ldi ZL, lo8(__heap_start)                           ; Load start of available sram in Z reg
   ldi ZH, hi8(__heap_start)
+	movw YL, r16                                        ; Load frame ptr in Y
+	sbiw YL, malloc_FRAME_SIZE                          ; Allocate size on frame
 
-  subi r16, ALC_SP_PADDING                            ; Apply SP padding 
+  subi r16, ALC_SP_PADDING + malloc_FRAME_SIZE        ; Apply SP padding 
   sbc r17, r1
 
   sub r16, ZL                                         ; Get available sram which is neither occupied by Stack or Data
@@ -60,8 +66,8 @@ malloc:                                               ; size: r24:r25 & used reg
   cpc r25, r17
   brsh mlc_fail_null                                  ; Fail if size is too large 
 
-  sts mlc_sp_addr, r16                                ; Store padded SP addr
-  sts mlc_sp_addr+0x01, r17
+  std Y+ malloc_SPADDR_OFST, r16                      ; Store padded SP addr
+  std Y+ (malloc_SPADDR_OFST+1), r17
 
   lds r20, alc_flags                                  ; Load flags from sram
   sbrc r20, 0                                         ; Skip if first_alloc flag is cleared (bit 0)
@@ -103,8 +109,8 @@ mlc_heap_walk_continue:
   add ZL, r18
   adc ZH, r19
 
-  lds r16, mlc_sp_addr                                ; Check if we did not exceed SP boundary
-  lds r17, mlc_sp_addr+0x01
+  ldd r16, Y+ malloc_SPADDR_OFST                      ; Check if we did not exceed SP boundary
+  ldd r17, Y+ (malloc_SPADDR_OFST+1)
   cp  ZL, r16
   cpc ZH, r17
   brsh mlc_fail_null                                  ; If SP boundary exceeded 
@@ -157,11 +163,10 @@ mlc_match_free:                                       ; Match for free space in 
 
   rcall mlc_clear_prv_offset
 
-	add ZL, r16
+	add ZL, r16                                         ; Set ptr to next hdr
   adc ZH, r17
 
 mlc_new_header:                                       ; New header at addr in Z reg & alloc size in r24:r25 reg & offset r18:r19
-                                                      ; Set data in header
   andi r19, 0b1111                                    ; Get only first 4 bits of sizeh 
   andi r25, 0b1111                                    ; Get only first 4 bits of offset
   swap r19
@@ -173,7 +178,9 @@ mlc_new_header:                                       ; New header at addr in Z 
   movw r24, ZL                                        ; Set return val to ptr to data
 
 mlc_ret:                                              ; Return addr in r24:r25
-  pop r17                                             ; Put back used regs & sreg
+	pop YH                                              ; Put back used regs & sreg
+	pop YL
+  pop r17
   pop r16
 
   ret
@@ -187,6 +194,9 @@ mlc_clear_prv_offset:                                 ; Update previous header
 
   ret
 
+/**
+ * Frees data at given addr (r24:r25)
+ **/
 .global free                                          ; MARK: free
 free:                                                 ; addr: r25:r24 & used regs: r16:r17
   push r16
@@ -304,8 +314,20 @@ free_match_end:                                       ; Set new_offset to ALC_HD
 
 	rjmp free_match_hdr_set
 
-.global malloc_get_header                             ; MARK: Debug 
-malloc_get_header:
+/**
+ * TODO: Implement
+ **/
+.global realloc
+realloc:
+  ret
+
+#ifdef ALC_DEBUG
+
+/**
+ * Return (r22:r25) header of given addr (r24:r25)
+ **/
+.global mlchdr
+mlchdr:
   movw ZL, r24
 
   sbiw ZL, 3
@@ -314,3 +336,5 @@ malloc_get_header:
   ld r24, Z+
 
   ret
+
+#endif

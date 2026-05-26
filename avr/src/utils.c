@@ -55,7 +55,7 @@ void c_entry() {
 }
 
 uint8_t validate_heap(void* ptr) {
-  struct alc_header hdr = malloc_get_header(ptr);
+  struct alc_header hdr = mlchdr(ptr);
   int size = hdr.sizel | ((hdr.sizeh_offseth & 0xf) << 8);
   int offset = hdr.offsetl | ((hdr.sizeh_offseth >> 4) << 8);
 
@@ -74,7 +74,7 @@ uint8_t validate_heap(void* ptr) {
       usart_send_str("[iv]");
       return 1;
     }
-    hdr = malloc_get_header(ptr);
+    hdr = mlchdr(ptr);
     size = hdr.sizel | ((hdr.sizeh_offseth & 0xf) << 8);
     offset = hdr.offsetl | ((hdr.sizeh_offseth >> 4) << 8);
   }

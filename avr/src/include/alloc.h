@@ -19,8 +19,8 @@
  * Limitations:
  *	- Can't work on mem with more than 4096 bytes of mem (as offset would
  *		not be sufficient is heap took all available sram)
- *  - Not interrupt-safe if ISRs use malloc/free they need to do it outside
- *  	of another execution of malloc/free
+ *  - Not interrupt-safe if ISRs use malloc/realloc/free they need to do it outside
+ *  	of another execution of malloc/realloc/free
  *  - Only works on AVR arch (tested on atmega328p)
  *
  * Copyright (C) 2026 @kcraft059 - GPL v3
@@ -34,21 +34,34 @@
  * Allocates a block of memory of the given size.
  *
  * @param size Number of bytes to be allocated (max <= size of available mem <= 4094).
- * @return Pointer to allocated memory, or NULL if allocation failed (size too large, or OOM).
+ * @return Pointer to allocated memory block, or NULL if allocation failed (size too large, or OOM).
  *
- * @note Not interrupt-safe if ISRs use malloc/free.
+ * @note Not interrupt-safe if ISRs use malloc/realloc/free.
  */
 extern void* malloc(size_t size);
 
 /**
- * Frees the block of memory at given header.
+ * Frees the block of memory at given adress.
  *
- * @param ptr Pointer to the adress to be freed.
+ * @param ptr Pointer to the memory block to be freed.
  *
  * @note Freeing a non-allocated adress is considered as UB.
+ *       Not interrupt-safe if ISRs use malloc/realloc/free.
  */
 extern void free(void* ptr);
 
+/**
+ * Reallocates a block of memory to new size at given adress.
+ *
+ * @param ptr Pointer to the memory block to be reallocated
+ * @param size New size of memory block
+ * @return Pointer to the new memory block
+ *
+ * @note Not interrupt-safe if ISRs use malloc/realloc/free.
+ **/
+extern void* realloc(void* ptr, size_t size);
+
+#ifdef ALC_DEBUG
 /**
  * @brief Allocation header
  *
@@ -68,4 +81,5 @@ struct __attribute__((packed)) alc_header {
  *
  * @note Giving a ptr which hasn't been allocated will result in UB.
  */
-extern struct alc_header malloc_get_header(void* ptr);
+extern struct alc_header mlchdr(void* ptr);
+#endif
