@@ -1,21 +1,15 @@
+#define ALC_TABLE_NUM 16
+
 #include <avr/io.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util/delay.h>
+#include <alloc.h>
+
 
 uint8_t mask = (1 << PORTB5);
-
-struct __attribute((packed)) mlc_header {
-  uint8_t sizel;
-  uint8_t offsetl;
-  uint8_t sizeh_offseth;
-};
-
-extern uint8_t alc_flags;
-extern void* malloc(uint16_t);
-extern struct mlc_header malloc_get_header(void*);
 
 void usart_send(char chr);
 void usart_init(uint16_t ubrr);
@@ -34,7 +28,6 @@ void c_entry() {
   free(allc);
   validate_heap(allc);
 
-#define ALC_TABLE_NUM 16
   void* allocs[ALC_TABLE_NUM] = {};
 
   for (uint16_t i = 0; i < 100; i++) {
@@ -62,7 +55,7 @@ void c_entry() {
 }
 
 uint8_t validate_heap(void* ptr) {
-  struct mlc_header hdr = malloc_get_header(ptr);
+  struct alc_header hdr = malloc_get_header(ptr);
   int size = hdr.sizel | ((hdr.sizeh_offseth & 0xf) << 8);
   int offset = hdr.offsetl | ((hdr.sizeh_offseth >> 4) << 8);
 

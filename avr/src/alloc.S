@@ -1,8 +1,36 @@
+/**-----------------------------------------------------------------------*
+ * avr-malloc - Lightweight memory allocator for AVR micro-controller
+ *
+ * Linked list allocator with 3-byte packed headers to minimize overhead.
+ *
+ * Each header packs 2 values each respectively 12 bits allowing for a
+ * maximum theorical single 4094 bytes allocation. (Tho in practice it
+ * can't be reached and isn't meant to scale further than 2Kb memory)
+ * Header is formated as follows:
+ *  - [byte] sizel
+ *  - [byte] offsetl
+ *  - [byte] sizeh_offseth
+ *
+ * In header allocated data size is referred as size and offset from next data
+ * block as offset.
+ * Heap layout:
+ *   [header 3b][size Nb][offset Nb][next header 3b]...
+ *
+ * Limitations:
+ *	- Can't work on mem with more than 4096 bytes of mem (as offset would
+ *		not be sufficient is heap took all available sram)
+ *  - Not interrupt-safe if ISRs use malloc/free they need to do it outside
+ *  	of another execution of malloc/free
+ *  - Only works on AVR arch (tested on atmega328p)
+ *
+ * Copyright (C) 2026 @kcraft059 - GPL v3
+ *-----------------------------------------------------------------------**/
+
 #include <avr/io.h>
 
-#define ALC_HDR_SIZE 0x03
-#define ALC_HDR_END 0x0fff
-#define ALC_SP_PADDING 0x04
+#define ALC_HDR_SIZE 0x03                             /**< Size of header in bytes                 */
+#define ALC_HDR_END 0x0fff                            /**< End of chain mark (in offset)           */
+#define ALC_SP_PADDING 0x04                           /**< Padding between heap and stack in bytes */
 
 .section .data
 .global alc_flags
