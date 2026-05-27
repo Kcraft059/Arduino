@@ -49,14 +49,16 @@ malloc:                                               ; size: r24:r25 & used reg
 	push YL
 	push YH
 
-  in r16, _SFR_IO_ADDR(SPL)                           ; Load end of available sram (SP)
-  in r17, _SFR_IO_ADDR(SPH)
+  in YL, _SFR_IO_ADDR(SPL)                            ; Load end of available sram (SP)
+  in YH, _SFR_IO_ADDR(SPH)
+	sbiw YL, malloc_FRAME_SIZE                          ; Allocate size on frame
+	out _SFR_IO_ADDR(SPL), YL                           ; Update SP to end of frame
+	out _SFR_IO_ADDR(SPH), YH
+
   ldi ZL, lo8(__heap_start)                           ; Load start of available sram in Z reg
   ldi ZH, hi8(__heap_start)
-	movw YL, r16                                        ; Load frame ptr in Y
-	sbiw YL, malloc_FRAME_SIZE                          ; Allocate size on frame
-
-  subi r16, ALC_SP_PADDING + malloc_FRAME_SIZE        ; Apply SP padding 
+	movw r16, YL                                        ; Load current SP in r16
+  subi r16, ALC_SP_PADDING                            ; Apply SP padding 
   sbc r17, r1
 
   sub r16, ZL                                         ; Get available sram which is neither occupied by Stack or Data
@@ -178,6 +180,10 @@ mlc_new_header:                                       ; New header at addr in Z 
   movw r24, ZL                                        ; Set return val to ptr to data
 
 mlc_ret:                                              ; Return addr in r24:r25
+	adiw YL, malloc_FRAME_SIZE                          ; Set YL back to original SP
+	out _SFR_IO_ADDR(SPL), YL                           ; Update SP
+	out _SFR_IO_ADDR(SPH), YH
+
 	pop YH                                              ; Put back used regs & sreg
 	pop YL
   pop r17
